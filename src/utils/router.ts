@@ -4,11 +4,11 @@ export type Route =
   | { page: 'home' }
   | { page: 'state'; id: string };
 
-function parseHash(): Route {
-  const hash = window.location.hash.slice(1); // remove #
+function parsePath(): Route {
+  const path = window.location.pathname;
 
   // /states/{id}
-  const stateMatch = hash.match(/^\/states\/([^/]+)$/);
+  const stateMatch = path.match(/^\/states\/([^/]+)$/);
   if (stateMatch) {
     return { page: 'state', id: stateMatch[1] };
   }
@@ -17,23 +17,26 @@ function parseHash(): Route {
 }
 
 export function useRouter() {
-  const [route, setRoute] = useState<Route>(parseHash);
+  const [route, setRoute] = useState<Route>(parsePath);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setRoute(parseHash());
+    const handlePopState = () => {
+      setRoute(parsePath());
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const navigate = useCallback((newRoute: Route) => {
+    let path: string;
     if (newRoute.page === 'home') {
-      window.location.hash = '/';
-    } else if (newRoute.page === 'state') {
-      window.location.hash = `/states/${newRoute.id}`;
+      path = '/';
+    } else {
+      path = `/states/${newRoute.id}`;
     }
+    window.history.pushState(null, '', path);
+    setRoute(newRoute);
   }, []);
 
   return { route, navigate };

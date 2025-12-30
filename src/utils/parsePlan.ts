@@ -203,6 +203,7 @@ function getProviderColor(provider: string): { bg: string; border: string; text:
 }
 
 // リソースタイプからサービス名を抽出
+// google_secret_manager_secret -> secret_manager
 // google_cloud_run_v2_job -> cloud_run_v2
 // aws_s3_bucket -> s3
 function extractServiceFromType(type: string, provider: string): { service: string; resourceName: string } {
@@ -210,59 +211,26 @@ function extractServiceFromType(type: string, provider: string): { service: stri
 
   // プロバイダープレフィックスを除去
   let remaining = type;
-  if (type.startsWith(`${shortProvider}_`)) {
-    remaining = type.slice(shortProvider.length + 1);
-  } else if (type.startsWith('google_')) {
-    remaining = type.slice(7);
-  } else if (type.startsWith('aws_')) {
-    remaining = type.slice(4);
-  } else if (type.startsWith('azurerm_')) {
-    remaining = type.slice(8);
-  }
-
-  // サービス名とリソース名を分離
-  // 共通パターン: service_resource または service_sub_resource
-  const parts = remaining.split('_');
-
-  if (parts.length === 1) {
-    return { service: parts[0], resourceName: parts[0] };
-  }
-
-  // 特殊なケース: cloud_run_v2_job のような複合サービス名
-  // v1, v2などのバージョンを含むケースを検出
-  let serviceEndIndex = 1;
-  for (let i = 1; i < parts.length - 1; i++) {
-    if (/^v\d+$/.test(parts[i])) {
-      serviceEndIndex = i + 1;
+  const prefixes = [`${shortProvider}_`, 'google_', 'aws_', 'azurerm_'];
+  for (const prefix of prefixes) {
+    if (type.startsWith(prefix)) {
+      remaining = type.slice(prefix.length);
       break;
     }
   }
 
-  // 2語以上のサービス名を検出 (compute_instance, cloud_run など)
-  const knownMultiWordServices = [
-    'cloud_run', 'cloud_sql', 'cloud_storage', 'cloud_functions',
-    'compute_instance', 'container_cluster', 'bigquery',
-    'api_gateway', 'app_engine', 'cloud_build',
-    'iam_role', 'iam_policy', 'iam_user',
-    's3_bucket', 'ec2_instance', 'rds_cluster',
-    'lambda_function', 'dynamodb_table',
-  ];
+  const parts = remaining.split('_');
 
-  for (const known of knownMultiWordServices) {
-    if (remaining.startsWith(known)) {
-      const rest = remaining.slice(known.length);
-      if (rest === '' || rest.startsWith('_')) {
-        return {
-          service: known,
-          resourceName: rest ? rest.slice(1) : known.split('_').pop()!,
-        };
-      }
-    }
+  // 1語のみ: サービス名=リソース名
+  if (parts.length === 1) {
+    return { service: parts[0], resourceName: parts[0] };
   }
 
-  // デフォルト: 最初の部分をサービス名、残りをリソース名
-  const service = parts.slice(0, serviceEndIndex).join('_');
-  const resourceName = parts.slice(serviceEndIndex).join('_') || parts[parts.length - 1];
+  // 最後の要素をリソース名、残りをサービス名とする
+  // 例: secret_manager_secret -> service: secret_manager, resource: secret
+  // 例: cloud_run_v2_job -> service: cloud_run_v2, resource: job
+  const resourceName = parts[parts.length - 1];
+  const service = parts.slice(0, -1).join('_');
 
   return { service, resourceName };
 }
