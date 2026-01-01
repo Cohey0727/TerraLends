@@ -44,7 +44,7 @@ terraform plan -out=plan.out && terraform show -json plan.out > plan.json
 ## URL ルーティング
 
 - `/` - ホーム画面（ファイルアップロード）
-- `/states/{id}` - 保存された Plan の可視化画面
+- `/plans/{id}` - 保存された Plan の可視化画面
 
 履歴は localStorage に保存され、URL を共有することで同じブラウザ内で再表示できます。
 
@@ -92,13 +92,16 @@ src/
 │   ├── ResourceList.tsx  # サイドバーのリソース一覧
 │   ├── ResourceNode.tsx  # カスタムグラフノード
 │   └── DetailPanel.tsx   # リソース詳細パネル
+├── pages/
+│   ├── HomePage.tsx      # ホーム画面（ファイルアップロード）
+│   └── PlanPage.tsx      # Plan 可視化画面
 ├── types/
 │   └── terraform.ts      # Terraform Plan JSON の型定義
 ├── utils/
 │   ├── parsePlan.ts      # JSON パーサー & React Flow 変換
 │   ├── storage.ts        # localStorage 管理
 │   └── router.ts         # 自作ルーター (History API)
-├── App.tsx               # メインアプリケーション
+├── App.tsx               # ルーティング
 ├── App.css               # グローバルスタイル
 └── main.tsx              # エントリーポイント
 ```

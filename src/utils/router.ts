@@ -2,15 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 
 export type Route =
   | { page: 'home' }
-  | { page: 'state'; id: string };
+  | { page: 'plan'; id: string };
 
 function parsePath(): Route {
   const path = window.location.pathname;
 
-  // /states/{id}
-  const stateMatch = path.match(/^\/states\/([^/]+)$/);
-  if (stateMatch) {
-    return { page: 'state', id: stateMatch[1] };
+  // /plans/{id}
+  const planMatch = path.match(/^\/plans\/([^/]+)$/);
+  if (planMatch) {
+    return { page: 'plan', id: planMatch[1] };
   }
 
   return { page: 'home' };
@@ -33,7 +33,7 @@ export function useRouter() {
     if (newRoute.page === 'home') {
       path = '/';
     } else {
-      path = `/states/${newRoute.id}`;
+      path = `/plans/${newRoute.id}`;
     }
     window.history.pushState(null, '', path);
     setRoute(newRoute);
